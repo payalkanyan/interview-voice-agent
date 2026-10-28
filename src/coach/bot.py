@@ -34,6 +34,7 @@ from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.workers.runner import WorkerRunner
 
 from coach import flow
+from coach.latency_observer import LatencyObserver
 from coach.transcript import TranscriptRecorder
 
 load_dotenv()
@@ -178,8 +179,9 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
     session_dir = make_session_dir()
     logger.info(f"Session artifacts will be written to {session_dir}")
     transcript = TranscriptRecorder(session_dir)
+    latency = LatencyObserver(session_dir)
 
-    worker = PipelineWorker(pipeline, observers=[transcript])
+    worker = PipelineWorker(pipeline, observers=[transcript, latency])
     runner = WorkerRunner(handle_sigint=runner_args.handle_sigint)
     await runner.add_workers(worker)
 
@@ -201,6 +203,7 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
     async def on_client_disconnected(transport, client) -> None:
         logger.info("Client disconnected; ending session")
         transcript.write()
+        latency.write()
         await worker.cancel()
 
     await runner.run()
