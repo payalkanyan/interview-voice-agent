@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Voice mock interview coach built with Pipecat"
 requires-python = ">=3.12"
 dependencies = [
-    "pipecat-ai[cartesia,deepgram,google,silero,webrtc]==1.14.0",
+    "pipecat-ai[cartesia,deepgram,google,runner,silero,webrtc]==1.14.0",
     "loguru>=0.7.3",
     "python-dotenv>=1.0.1",
 ]
