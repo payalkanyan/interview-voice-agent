@@ -4,7 +4,10 @@ import os
 
 from dotenv import load_dotenv
 from loguru import logger
+from pipecat.audio.turn.smart_turn.base_smart_turn import SmartTurnParams
+from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
 from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.worker import PipelineWorker
 from pipecat.processors.aggregators.llm_context import LLMContext
@@ -18,6 +21,13 @@ from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.google.llm import GoogleLLMService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
+from pipecat.turns.user_start.min_words_user_turn_start_strategy import (
+    MinWordsUserTurnStartStrategy,
+)
+from pipecat.turns.user_stop.turn_analyzer_user_turn_stop_strategy import (
+    TurnAnalyzerUserTurnStopStrategy,
+)
+from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.workers.runner import WorkerRunner
 
 load_dotenv()
@@ -31,6 +41,18 @@ PLACEHOLDER_PROMPT = (
 def _env(name: str, default: str) -> str:
     """Read a setting from the environment, falling back to its documented default."""
     return os.getenv(name) or default
+
+
+def _env_float(name: str, default: float) -> float:
+    """Read a numeric tunable from the environment."""
+    raw = os.getenv(name)
+    return float(raw) if raw else default
+
+
+def _env_int(name: str, default: int) -> int:
+    """Read an integer tunable from the environment."""
+    raw = os.getenv(name)
+    return int(raw) if raw else default
 
 
 def _require_env(name: str) -> str:
@@ -67,6 +89,37 @@ def build_tts() -> CartesiaTTSService:
     )
 
 
+def build_turn_strategies() -> UserTurnStrategies:
+    """Build turn detection: Silero VAD stop timing plus Smart Turn v3, with a word floor.
+
+    MinWordsUserTurnStartStrategy only applies its threshold while the bot is speaking, so a
+    cough or "mm hmm" cannot interrupt, while a single word still starts a normal turn.
+    """
+    smart_turn = LocalSmartTurnAnalyzerV3(
+        params=SmartTurnParams(
+            stop_secs=_env_float("SMART_TURN_STOP_SECS", 3.0),
+            pre_speech_ms=_env_float("SMART_TURN_PRE_SPEECH_MS", 500.0),
+            max_duration_secs=_env_float("SMART_TURN_MAX_DURATION_SECS", 8.0),
+        )
+    )
+    return UserTurnStrategies(
+        start=[MinWordsUserTurnStartStrategy(min_words=_env_int("INTERRUPT_MIN_WORDS", 2))],
+        stop=[TurnAnalyzerUserTurnStopStrategy(turn_analyzer=smart_turn)],
+    )
+
+
+def build_vad() -> SileroVADAnalyzer:
+    """Build the Silero VAD analyzer that gates speech start and stop."""
+    return SileroVADAnalyzer(
+        params=VADParams(
+            confidence=_env_float("VAD_CONFIDENCE", 0.7),
+            start_secs=_env_float("VAD_START_SECS", 0.2),
+            stop_secs=_env_float("VAD_STOP_SECS", 0.2),
+            min_volume=_env_float("VAD_MIN_VOLUME", 0.6),
+        )
+    )
+
+
 async def bot(runner_args: RunnerArguments) -> None:
     """Run one interview session. Called by Pipecat's dev runner per connection."""
     transport = await create_transport(
@@ -92,7 +145,10 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
     )
     aggregators = LLMContextAggregatorPair(
         context,
-        user_params=LLMUserAggregatorParams(vad_analyzer=SileroVADAnalyzer()),
+        user_params=LLMUserAggregatorParams(
+            vad_analyzer=build_vad(),
+            user_turn_strategies=build_turn_strategies(),
+        ),
     )
 
     pipeline = Pipeline(
