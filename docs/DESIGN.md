@@ -70,8 +70,11 @@ Tunable defaults, for the README's default/mine/why table:
   `DeepgramSTTSettings` (`:179`) carries `keyterm` (`:212`) for the spec's keyterms, plus `model`
   and `language` inherited from `STTSettings`. `live_options=` is deprecated since 0.0.105 (`:~340`)
   — use `settings=`.
-- **TTS:** `CartesiaTTSService(api_key=..., voice_id=..., model=...)` —
-  `services/cartesia/tts.py:310`, constructor at `:335`. WebSocket streaming with word timestamps.
+- **TTS:** `CartesiaTTSService(api_key=..., settings=CartesiaTTSService.Settings(...))` —
+  `services/cartesia/tts.py:310`, constructor at `:335`, `Settings = CartesiaTTSSettings` at `:318`.
+  The settings fields are `model`, `voice`, `language`, `extra`, `generation_config` and
+  `pronunciation_dict_id`. Passing `voice_id=`/`model=` to the constructor still works but is
+  deprecated since 0.0.105. WebSocket streaming with word timestamps.
 - **LLM:** `GoogleLLMService(api_key=..., settings=GoogleLLMService.Settings(model=...))` —
   `services/google/llm.py:205`, constructor at `:255`. Bare `model=` is deprecated since 0.0.105
   (`:277`). The installed `_THINKING_DEFAULTS` map (`:81-99`) already knows both of our models:

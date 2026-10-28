@@ -95,11 +95,11 @@ def build_llm() -> GoogleLLMService:
 
 def build_tts() -> CartesiaTTSService:
     """Build the Cartesia websocket TTS service."""
-    return CartesiaTTSService(
-        api_key=_require_env("CARTESIA_API_KEY"),
-        voice_id=_require_env("CARTESIA_VOICE_ID"),
+    settings = CartesiaTTSService.Settings(
         model=_env("CARTESIA_MODEL", "sonic-3.6"),
+        voice=_require_env("CARTESIA_VOICE_ID"),
     )
+    return CartesiaTTSService(api_key=_require_env("CARTESIA_API_KEY"), settings=settings)
 
 
 def build_turn_strategies() -> UserTurnStrategies:
