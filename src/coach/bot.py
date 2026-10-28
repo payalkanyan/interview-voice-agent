@@ -1,6 +1,8 @@
 """Voice mock interview coach: the Pipecat pipeline and its entry point."""
 
 import os
+from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 from loguru import logger
@@ -32,6 +34,7 @@ from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.workers.runner import WorkerRunner
 
 from coach import flow
+from coach.transcript import TranscriptRecorder
 
 load_dotenv()
 
@@ -39,6 +42,14 @@ load_dotenv()
 def _env(name: str, default: str) -> str:
     """Read a setting from the environment, falling back to its documented default."""
     return os.getenv(name) or default
+
+
+def make_session_dir() -> Path:
+    """Create the directory holding this session's transcript and latency log."""
+    root = Path(_env("LOG_DIR", "logs"))
+    path = root / f"session-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def _env_float(name: str, default: float) -> float:
@@ -164,7 +175,11 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
         ]
     )
 
-    worker = PipelineWorker(pipeline)
+    session_dir = make_session_dir()
+    logger.info(f"Session artifacts will be written to {session_dir}")
+    transcript = TranscriptRecorder(session_dir)
+
+    worker = PipelineWorker(pipeline, observers=[transcript])
     runner = WorkerRunner(handle_sigint=runner_args.handle_sigint)
     await runner.add_workers(worker)
 
@@ -185,6 +200,7 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client) -> None:
         logger.info("Client disconnected; ending session")
+        transcript.write()
         await worker.cancel()
 
     await runner.run()
