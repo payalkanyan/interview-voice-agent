@@ -57,7 +57,7 @@ def _start_feedback(flow_manager: FlowManager) -> None:
 
     transcript = transcript_for_feedback(context)
     model = os.getenv("GEMINI_FEEDBACK_MODEL") or "gemini-3.8-flash"
-    api_key = os.getenv("GOOGLE_API_KEY") or ""
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
     flow_manager.state["feedback_task"] = asyncio.create_task(
         generate_feedback(transcript, model, api_key)
     )

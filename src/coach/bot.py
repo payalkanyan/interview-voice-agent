@@ -65,12 +65,13 @@ def _env_int(name: str, default: int) -> int:
     return int(raw) if raw else default
 
 
-def _require_env(name: str) -> str:
+def _require_env(name: str, *aliases: str) -> str:
     """Read a required API key, failing loudly rather than at connection time."""
-    value = os.getenv(name)
-    if not value:
-        raise RuntimeError(f"{name} is not set. Copy .env.example to .env and fill it in.")
-    return value
+    for candidate in (name, *aliases):
+        value = os.getenv(candidate)
+        if value:
+            return value
+    raise RuntimeError(f"{name} is not set. Copy .env.example to .env and fill it in.")
 
 
 def build_stt() -> DeepgramSTTService:
@@ -87,7 +88,9 @@ def build_llm() -> GoogleLLMService:
     """Build the conversation LLM. The feedback model is a separate, stronger call."""
     model = _env("GEMINI_CONVERSATION_MODEL", "gemini-3.1-flash-lite")
     settings = GoogleLLMService.Settings(model=model)
-    return GoogleLLMService(api_key=_require_env("GOOGLE_API_KEY"), settings=settings)
+    return GoogleLLMService(
+        api_key=_require_env("GOOGLE_API_KEY", "GEMINI_API_KEY"), settings=settings
+    )
 
 
 def build_tts() -> CartesiaTTSService:
