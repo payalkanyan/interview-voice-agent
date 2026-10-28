@@ -137,6 +137,15 @@ class FollowUpLimiter(FrameProcessor):
 
         await self.push_frame(frame, direction)
 
+    def _begin_advance(self) -> None:
+        """Note that the interview is moving on, and restore the follow-up budget."""
+        self._advanced = True
+        if self._follow_up_used:
+            # The spent-budget message named "this question"; retire it so it cannot suppress
+            # a legitimate follow-up on the next one.
+            self._context.add_message({"role": "developer", "content": prompts.FOLLOW_UP_RESET})
+        self._follow_up_used = False
+
     def _spend_follow_up(self) -> None:
         """Classify the reply that just finished and update the budget."""
         reply = _normalize(self._reply)
