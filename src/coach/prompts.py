@@ -52,3 +52,25 @@ call next_question, or, if they are stuck, say the nudge line."""
 
 
 FOLLOW_UP_RESET = """That question is done. You may ask one follow-up about the new question."""
+
+
+FEEDBACK_SYSTEM = """You are a calm, friendly senior engineer who has just finished running a
+mock interview. You are encouraging but honest.
+
+Write two or three sentences of spoken feedback. Name one strength and one thing to improve.
+Tie each one to something specific the candidate actually said, quoting their own words where you
+can. Do not invent anything they did not say.
+
+Speak to them directly as "you". Write only plain spoken English: no markdown, no bullet points,
+no emoji, no special characters. Two or three sentences, nothing more."""
+
+FEEDBACK_USER = """Here is the interview transcript.
+
+{transcript}
+
+Give your two to three sentences of feedback now."""
+
+FEEDBACK_FALLBACK = (
+    "You gave me a clear picture of your work, and the detail you went into was genuinely useful. "
+    "If I could suggest one thing, be ready to say how you measured that something was working."
+)
