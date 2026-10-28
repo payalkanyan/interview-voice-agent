@@ -8,6 +8,7 @@ from pipecat.audio.turn.smart_turn.base_smart_turn import SmartTurnParams
 from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
+from pipecat.flows import FlowManager
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.worker import PipelineWorker
 from pipecat.processors.aggregators.llm_context import LLMContext
@@ -30,12 +31,9 @@ from pipecat.turns.user_stop.turn_analyzer_user_turn_stop_strategy import (
 from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.workers.runner import WorkerRunner
 
-load_dotenv()
+from coach import flow
 
-PLACEHOLDER_PROMPT = (
-    "You are a calm, friendly senior engineer running a short mock interview. "
-    "Keep your replies to one or two short sentences."
-)
+load_dotenv()
 
 
 def _env(name: str, default: str) -> str:
@@ -140,9 +138,9 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
     llm = build_llm()
     tts = build_tts()
 
-    context = LLMContext(
-        messages=[{"role": "system", "content": PLACEHOLDER_PROMPT}],
-    )
+    # The persona and the per-question tasks are set by the flow's nodes, so the context
+    # starts empty.
+    context = LLMContext()
     aggregators = LLMContextAggregatorPair(
         context,
         user_params=LLMUserAggregatorParams(
@@ -167,9 +165,18 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
     runner = WorkerRunner(handle_sigint=runner_args.handle_sigint)
     await runner.add_workers(worker)
 
+    flow_manager = FlowManager(
+        llm=llm,
+        context_aggregator=aggregators,
+        worker=worker,
+        transport=transport,
+    )
+
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client) -> None:
         logger.info("Client connected; starting interview")
+        flow_manager.state["question_index"] = 0
+        await flow_manager.initialize(flow.initial_node())
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client) -> None:
