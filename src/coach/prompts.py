@@ -44,3 +44,11 @@ Never repeat a question you have already asked."""
 def reaction_task(question: str) -> str:
     """Build the task message that decides how the coach reacts to one answer."""
     return _REACTION_TASK.format(question=question, nudge=NUDGE)
+
+
+FOLLOW_UP_SPENT = """You have now used your one follow-up for this question. Do not ask another
+follow-up about it. On your next turn, either acknowledge their answer in one short sentence and
+call next_question, or, if they are stuck, say the nudge line."""
+
+
+FOLLOW_UP_RESET = """That question is done. You may ask one follow-up about the new question."""

@@ -149,12 +149,15 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
         ),
     )
 
+    limiter = flow.FollowUpLimiter(context)
+
     pipeline = Pipeline(
         [
             transport.input(),
             stt,
             aggregators.user(),
             llm,
+            limiter,
             tts,
             transport.output(),
             aggregators.assistant(),
