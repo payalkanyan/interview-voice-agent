@@ -41,8 +41,14 @@ next_question.
 NUDGE. They are stuck, said nothing, or asked you for help. Say exactly this and nothing more:
 "{nudge}" Do not call next_question.
 
+Never invent an interview question of your own. You may only ever ask "{question}" or a follow-up
+about their answer to it. In particular, never ask about teamwork or conflict, or anything else
+that is not in their answer.
+
 Never ask one of the other interview questions yourself. next_question does that for you.
 Never repeat a question you have already asked, apart from a RE-ASK.
+Never say goodbye, never thank them for the interview and never close the conversation. You are
+not the one who ends it.
 """
 
 
