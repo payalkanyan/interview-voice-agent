@@ -1,0 +1,19 @@
+[00:01.417] coach: Hi, thanks for making the time. This will be short, just four questions. Tell me about a project you're proud of.
+[00:11.665] candidate: I don't English color bank.
+[00:12.657] coach: Tell [INTERRUPTED]
+[00:14.594] candidate: It's an open source Python library that tests voice agents. It's create simulated callers with personas. Grades each call on task completion, tool correctness, and language fit.
+[00:29.535] coach: That sounds like a very useful tool for developers. What was the hardest technical problem in it?
+[00:38.964] candidate: The hardest part was
+[00:39.946] coach: Take your time. Even a small project works.
+[00:48.337] candidate: The hardest part was making the simulated callers realistic. They kept sounding robotic. So I added a background story to every person.
+[00:57.651] coach: That is a clever way to improve the natural flow of the conversation.
+[01:01.476] coach: How did you know it was working well?
+[01:08.169] candidate: By using the metrics.
+[01:09.415] coach: Which metric showed the most improvement?
+[01:17.646] candidate: We reported fast activity with confident intervals over repeated runs. So one lucky run couldn't us.
+[01:22.591] coach: That makes sense for ensuring reliable results.
+[01:25.332] coach: What would you do differently now?
+[01:29.197] candidate: Can go ahead.
+[01:30.650] coach: Take your time. Even a small project works.
+[01:45.028] candidate: I will make the agent call the eval harness over h instead of importing it. So anything could plug their agent in.
+[01:48.560] coach: That sounds like a much more flexible approach.

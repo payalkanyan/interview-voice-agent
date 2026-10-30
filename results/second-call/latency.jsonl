@@ -1,0 +1,9 @@
+{"turn": 1, "user_stopped_ms": 11178, "turn_end_ms": 11667, "stt_final_ms": 11665, "llm_first_token_ms": 12498, "tts_first_audio_ms": 12622, "interrupted": true}
+{"turn": 2, "user_stopped_ms": 15177, "turn_end_ms": 15819, "stt_final_ms": 15668, "llm_first_token_ms": 16646, "tts_first_audio_ms": null, "interrupted": true}
+{"turn": 3, "user_stopped_ms": 23836, "turn_end_ms": 24504, "stt_final_ms": 24351, "llm_first_token_ms": 26321, "tts_first_audio_ms": 26535, "interrupted": false}
+{"turn": 4, "user_stopped_ms": 38399, "turn_end_ms": 38965, "stt_final_ms": 38964, "llm_first_token_ms": 39718, "tts_first_audio_ms": 39847, "interrupted": false}
+{"turn": 5, "user_stopped_ms": 52675, "turn_end_ms": 55878, "stt_final_ms": 53202, "llm_first_token_ms": 57397, "tts_first_audio_ms": 57569, "interrupted": false}
+{"turn": 6, "user_stopped_ms": 67561, "turn_end_ms": 68169, "stt_final_ms": 68169, "llm_first_token_ms": 69205, "tts_first_audio_ms": 69331, "interrupted": false}
+{"turn": 7, "user_stopped_ms": 80085, "turn_end_ms": 80816, "stt_final_ms": 80664, "llm_first_token_ms": 82405, "tts_first_audio_ms": 82545, "interrupted": false}
+{"turn": 8, "user_stopped_ms": 88730, "turn_end_ms": 89197, "stt_final_ms": 89197, "llm_first_token_ms": 90437, "tts_first_audio_ms": 90585, "interrupted": false}
+{"turn": 9, "user_stopped_ms": 105788, "turn_end_ms": 107211, "stt_final_ms": 107058, "llm_first_token_ms": 108412, "tts_first_audio_ms": 108527, "interrupted": false}

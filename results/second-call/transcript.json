@@ -1,0 +1,116 @@
+[
+  {
+    "speaker": "coach",
+    "text": "Hi, thanks for making the time. This will be short, just four questions. Tell me about a project you're proud of.",
+    "at_ms": 1417,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "I don't English color bank.",
+    "at_ms": 11665,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "Tell",
+    "at_ms": 12657,
+    "interrupted": true
+  },
+  {
+    "speaker": "candidate",
+    "text": "It's an open source Python library that tests voice agents. It's create simulated callers with personas. Grades each call on task completion, tool correctness, and language fit.",
+    "at_ms": 14594,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That sounds like a very useful tool for developers. What was the hardest technical problem in it?",
+    "at_ms": 29535,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "The hardest part was",
+    "at_ms": 38964,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "Take your time. Even a small project works.",
+    "at_ms": 39946,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "The hardest part was making the simulated callers realistic. They kept sounding robotic. So I added a background story to every person.",
+    "at_ms": 48337,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That is a clever way to improve the natural flow of the conversation.",
+    "at_ms": 57651,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "How did you know it was working well?",
+    "at_ms": 61476,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "By using the metrics.",
+    "at_ms": 68169,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "Which metric showed the most improvement?",
+    "at_ms": 69415,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "We reported fast activity with confident intervals over repeated runs. So one lucky run couldn't us.",
+    "at_ms": 77646,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That makes sense for ensuring reliable results.",
+    "at_ms": 82591,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "What would you do differently now?",
+    "at_ms": 85332,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "Can go ahead.",
+    "at_ms": 89197,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "Take your time. Even a small project works.",
+    "at_ms": 90650,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "I will make the agent call the eval harness over h instead of importing it. So anything could plug their agent in.",
+    "at_ms": 105028,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That sounds like a much more flexible approach.",
+    "at_ms": 108560,
+    "interrupted": false
+  }
+]
