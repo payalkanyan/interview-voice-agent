@@ -10,6 +10,7 @@ Each question is spoken by a ``tts_say`` pre-action rather than generated, which
 import asyncio
 import os
 import re
+from collections.abc import Awaitable, Callable
 
 from loguru import logger
 from pipecat.flows import ConsolidatedFunctionResult, FlowManager, NodeConfig
@@ -56,7 +57,7 @@ def _start_feedback(flow_manager: FlowManager) -> None:
         return
 
     transcript = transcript_for_feedback(context)
-    model = os.getenv("GEMINI_FEEDBACK_MODEL") or "gemini-3.8-flash"
+    model = os.getenv("GEMINI_FEEDBACK_MODEL") or "gemini-3.1-flash-lite"
     api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
     flow_manager.state["feedback_task"] = asyncio.create_task(
         generate_feedback(transcript, model, api_key)
@@ -84,6 +85,23 @@ async def next_question(flow_manager: FlowManager) -> ConsolidatedFunctionResult
     return None, question_node(index)
 
 
+async def force_advance(flow_manager: FlowManager) -> None:
+    """Advance the interview from code, when the LLM finished a turn without advancing.
+
+    The model is asked to call ``next_question`` once an answer is good enough, and if it simply
+    does not, the interview stalls where it stands: in the first live session it ended on a
+    goodbye of its own invention and the feedback node was never reached. This is the backstop,
+    so reaching the feedback is not contingent on the model choosing to.
+    """
+    if flow_manager.current_node == "feedback":
+        return
+
+    logger.warning("Coach stalled without calling next_question; advancing from code")
+    _, node = await next_question(flow_manager)
+    if node is not None:
+        await flow_manager.set_node_from_config(node)
+
+
 def initial_node() -> NodeConfig:
     """Build the node the interview starts in: the greeting plus question one."""
     return question_node(0)
@@ -105,10 +123,22 @@ class FollowUpLimiter(FrameProcessor):
     than from the node prompt alone.
     """
 
-    def __init__(self, context: LLMContext, **kwargs) -> None:
-        """Initialize the limiter against the context it will write constraints into."""
+    def __init__(
+        self,
+        context: LLMContext,
+        on_stalled: Callable[[], Awaitable[None]] | None = None,
+        **kwargs,
+    ) -> None:
+        """Initialize the limiter against the context it will write constraints into.
+
+        Args:
+            context: The LLM context to write follow-up constraints into.
+            on_stalled: Called when a reply finishes with the follow-up already spent and no
+                ``next_question`` call, meaning the interview would otherwise stall here.
+        """
         super().__init__(**kwargs)
         self._context = context
+        self._on_stalled = on_stalled
         self._nudge = _normalize(prompts.NUDGE)
         self._reply = ""
         self._advanced = False
@@ -176,6 +206,20 @@ class FollowUpLimiter(FrameProcessor):
             self._context.add_message({"role": "developer", "content": prompts.FOLLOW_UP_RESET})
         self._follow_up_used = False
 
+    def _schedule_stall(self) -> None:
+        """Hand the forced advance to the task manager.
+
+        Scheduled rather than awaited: the transition queues frames through this same pipeline,
+        so awaiting it inside ``process_frame`` would deadlock.
+        """
+        if self._on_stalled is None:
+            return
+        try:
+            self.create_task(self._on_stalled())
+        except Exception as exc:
+            # A failed backstop must not take the conversation down with it.
+            logger.error(f"Could not schedule the forced advance: {exc}")
+
     def _spend_follow_up(self) -> None:
         """Classify the reply that just finished and update the budget."""
         reply = _normalize(self._reply)
@@ -188,7 +232,10 @@ class FollowUpLimiter(FrameProcessor):
             logger.info("Coach re-asked the question; follow-up budget untouched")
             return
         if self._follow_up_used:
-            logger.warning("Coach followed up twice on one question, against the spec")
+            # The follow-up is spent and the coach still did not move on, so the interview is
+            # stuck on this question. Advance it in code rather than waiting on the model.
+            logger.warning("Coach did not move on with its follow-up spent; forcing the advance")
+            self._schedule_stall()
             return
 
         self._follow_up_used = True
@@ -217,8 +264,10 @@ async def generate_feedback(transcript: str, model: str, api_key: str) -> str:
     from google import genai
     from google.genai import types
 
-    client = genai.Client(api_key=api_key)
     try:
+        # Client construction is inside the guard too: a bad key or config must fall back to a
+        # spoken line rather than end the session in silence.
+        client = genai.Client(api_key=api_key)
         response = await client.aio.models.generate_content(
             model=model,
             contents=prompts.FEEDBACK_USER.format(transcript=transcript),

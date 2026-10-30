@@ -164,7 +164,16 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
         ),
     )
 
-    limiter = flow.FollowUpLimiter(context)
+    # The limiter needs to advance the flow when the coach stalls, and the flow manager needs
+    # the limiter, so the callback is bound through a holder the two share.
+    flow_manager_holder: dict[str, FlowManager] = {}
+
+    async def on_stalled() -> None:
+        manager = flow_manager_holder.get("manager")
+        if manager is not None:
+            await flow.force_advance(manager)
+
+    limiter = flow.FollowUpLimiter(context, on_stalled=on_stalled)
 
     pipeline = Pipeline(
         [
@@ -194,6 +203,7 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
         worker=worker,
         transport=transport,
     )
+    flow_manager_holder["manager"] = flow_manager
 
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client) -> None:

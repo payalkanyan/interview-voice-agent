@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from coach import prompts  # noqa: E402
 
-JUDGE_MODEL_DEFAULT = "gemini-3.8-flash"
+JUDGE_MODEL_DEFAULT = "gemini-3.1-flash-lite"
 
 JUDGE_SYSTEM = """You are grading one mock-interview transcript. Be strict and literal: judge
 only what the transcript shows, and quote it when you justify a verdict.

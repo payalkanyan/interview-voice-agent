@@ -12,6 +12,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.0",
     "ruff>=0.9.2",
 ]
 
@@ -31,3 +32,4 @@ select = ["B", "E", "F", "I", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
