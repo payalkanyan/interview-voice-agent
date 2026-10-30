@@ -25,7 +25,11 @@ BRIDGE = "Let me gather my thoughts for a second."
 
 _REACTION_TASK = """You just asked the candidate this question: "{question}"
 
-They have now replied. Do exactly one of these three things, and nothing else.
+They have now replied. Do exactly one of these four things, and nothing else.
+
+RE-ASK. Their reply does not answer "{question}" at all, because it was a leftover fragment of
+their previous answer or was about something else. Ask the question again, in exactly these
+words: "{question}" Do not call next_question.
 
 MOVE ON. The answer is good enough. Acknowledge it warmly in at most one short sentence, then
 call next_question.
@@ -38,7 +42,8 @@ NUDGE. They are stuck, said nothing, or asked you for help. Say exactly this and
 "{nudge}" Do not call next_question.
 
 Never ask one of the other interview questions yourself. next_question does that for you.
-Never repeat a question you have already asked."""
+Never repeat a question you have already asked, apart from a RE-ASK.
+"""
 
 
 def reaction_task(question: str) -> str:

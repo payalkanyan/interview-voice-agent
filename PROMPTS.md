@@ -55,7 +55,11 @@ This is the task message on every question node. `{question}` is the question th
 ```
 You just asked the candidate this question: "{question}"
 
-They have now replied. Do exactly one of these three things, and nothing else.
+They have now replied. Do exactly one of these four things, and nothing else.
+
+RE-ASK. Their reply does not answer "{question}" at all, because it was a leftover fragment of
+their previous answer or was about something else. Ask the question again, in exactly these
+words: "{question}" Do not call next_question.
 
 MOVE ON. The answer is good enough. Acknowledge it warmly in at most one short sentence, then
 call next_question.
@@ -68,18 +72,20 @@ NUDGE. They are stuck, said nothing, or asked you for help. Say exactly this and
 "{nudge}" Do not call next_question.
 
 Never ask one of the other interview questions yourself. next_question does that for you.
-Never repeat a question you have already asked.
+Never repeat a question you have already asked, apart from a RE-ASK.
+
 ```
 
 ### Decision logic
 
-The three branches are a prompt decision; the consequences are code.
+The four branches are a prompt decision; the consequences are code.
 
 | Branch | What the model does | What code does |
 |---|---|---|
 | Move on | Calls `next_question` | The flow graph transitions to the next question node, which speaks it verbatim |
 | Follow up | Speaks, no tool call | `FollowUpLimiter` marks the budget spent and injects the constraint below |
 | Nudge | Speaks the nudge line exactly | Recognised by text match; the budget is untouched |
+| Re-ask | Repeats the current question verbatim | Recognised by the reply ending with the question; the budget is untouched |
 
 The model has exactly one tool, so it cannot skip, reorder or invent a question. Advancing costs
 a tool call plus a second LLM turn for the new node; following up and nudging cost one turn, which

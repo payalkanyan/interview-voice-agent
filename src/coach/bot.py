@@ -200,6 +200,7 @@ async def run_session(transport: BaseTransport, runner_args: RunnerArguments) ->
         logger.info("Client connected; starting interview")
         flow_manager.state["question_index"] = 0
         flow_manager.state["context"] = context
+        flow_manager.state["limiter"] = limiter
         await flow_manager.initialize(flow.initial_node())
 
     @transport.event_handler("on_client_disconnected")

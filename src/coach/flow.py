@@ -71,6 +71,10 @@ async def next_question(flow_manager: FlowManager) -> ConsolidatedFunctionResult
     index = flow_manager.state.get("question_index", 0) + 1
     flow_manager.state["question_index"] = index
 
+    limiter = flow_manager.state.get("limiter")
+    if limiter is not None:
+        limiter.set_question_index(index)
+
     if index >= QUESTION_COUNT:
         logger.info("All questions answered; generating feedback")
         _start_feedback(flow_manager)
@@ -109,11 +113,37 @@ class FollowUpLimiter(FrameProcessor):
         self._reply = ""
         self._advanced = False
         self._follow_up_used = False
+        self._question_index = 0
 
     @property
     def follow_up_used(self) -> bool:
         """Whether the current question has already had its one follow-up."""
         return self._follow_up_used
+
+    @property
+    def question_index(self) -> int:
+        """Which question the coach is currently on, counting from zero."""
+        return self._question_index
+
+    def set_question_index(self, index: int) -> None:
+        """Tell the limiter which question is live. Called by ``next_question``."""
+        self._question_index = index
+
+    def _current_question(self) -> str | None:
+        """The question being asked right now, or None once the questions run out."""
+        if 0 <= self._question_index < QUESTION_COUNT:
+            return prompts.QUESTIONS[self._question_index]
+        return None
+
+    def _is_reask(self, reply: str) -> bool:
+        """Whether this reply is the coach asking the current question again.
+
+        A question spoken by a ``tts_say`` pre-action can land while the candidate is still
+        finishing the previous answer, so the leftover fragment arrives as the answer. The coach
+        re-asking in that case is doing the right thing, and must not be charged a follow-up.
+        """
+        question = self._current_question()
+        return bool(question) and reply.endswith(_normalize(question))
 
     async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
         """Track coach replies and spend the follow-up budget."""
@@ -153,6 +183,9 @@ class FollowUpLimiter(FrameProcessor):
             return
         if reply == self._nudge:
             logger.info("Coach nudged; follow-up budget untouched")
+            return
+        if self._is_reask(reply):
+            logger.info("Coach re-asked the question; follow-up budget untouched")
             return
         if self._follow_up_used:
             logger.warning("Coach followed up twice on one question, against the spec")
