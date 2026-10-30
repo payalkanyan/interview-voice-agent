@@ -91,3 +91,70 @@ case for a Flash-Lite model is network, and the spread exceeds the gap between t
 comparison says nothing. The choice remains the spec's, unmeasured.
 
 **Measurement:** The above, which is the point: it needs re-running from the demo machine.
+
+## 2026-10-30: Feedback model moved to `gemini-3.1-flash-lite`
+
+**Changed:** `GEMINI_FEEDBACK_MODEL` now defaults to `gemini-3.1-flash-lite`, and
+`EVAL_JUDGE_MODEL` with it. Client construction moved inside the error guard in
+`generate_feedback`.
+
+**Why:** `gemini-3.8-flash` returned `503 UNAVAILABLE` on every attempt across two days, so the
+"stronger model in a separate call" the spec asks for produced nothing at all. A weaker model that
+answers beats a stronger one that does not. The fixed fallback line is kept for when even this
+fails.
+
+**Measurement:** 5 of 5 TTFT attempts and the eval judge all failed with 503 on
+`gemini-3.8-flash`. `gemini-3.1-flash-lite` returned usable two-sentence feedback on the same key
+during testing.
+
+## 2026-10-30: A re-ask does not spend the follow-up budget
+
+**Changed:** Added a RE-ASK branch to the reaction task, plus question-index tracking and re-ask
+recognition in `FollowUpLimiter`.
+
+**Why:** Questions are spoken by a `tts_say` pre-action on node entry, which does not wait for the
+candidate to stop talking. In the first live session question four played 0.8 seconds after the
+coach was interrupted, and the leftover fragment "and other benchmarks." was taken as the answer.
+Re-asking is the right recovery, so it must not cost the question its follow-up.
+
+**Measurement:** `results/first-call/transcript.txt`, 01:54.118 to 01:55.699.
+
+## 2026-10-30: Reaching the feedback is a code backstop, not a prompt instruction
+
+**Changed:** Added `force_advance`, called via an `on_stalled` callback when a reply finishes with
+the follow-up spent and no `next_question` call. The prompt also now forbids goodbyes.
+
+**Why:** In the first live session the coach ended question four with "Thanks for sharing those
+details with me today.", never called `next_question`, and the session ended with no feedback at
+all. The spec requires feedback, so it cannot be contingent on the model choosing to advance.
+
+**Measurement:** `results/first-call/transcript.txt`, 02:16.217 is the last line of the session.
+
+## 2026-10-30: Latency rows are keyed on coach replies
+
+**Changed:** `LatencyObserver` holds user-side timings as pending values and opens a row on the
+first `LLMTextFrame` of a reply, rather than on every `VADUserStartedSpeakingFrame`.
+
+**Why:** Keying on speech starts gave 74 rows for about 8 real turns, 37 entirely null, because
+every pause and blip opened one. Worse, rows opened before the coach replied could collect a
+scripted question's audio, which is how 3 rows ended up with `tts_first_audio_ms` earlier than
+`user_stopped_ms`. A reply is the first moment a turn is known to be real, and scripted `tts_say`
+questions produce no LLM text, so they open no row.
+
+**Measurement:** `results/first-call/latency.jsonl` has 74 rows, 37 null, 9 with both endpoints,
+3 inverted. The replacement is covered by `tests/test_latency_observer.py`, which drives synthetic
+frames shaped like that session and asserts one row per reply.
+
+## 2026-10-30: STT is reported as an offset, not a pipeline stage
+
+**Changed:** `scripts/latency_report.py` stages are now user-stopped to turn-end, turn-end to
+first token, and first token to first audio. The final transcript is reported separately as an
+offset from the end-of-turn decision.
+
+**Why:** The old stage list assumed a strict chain through STT, but
+`TurnAnalyzerUserTurnStopStrategy` waits for whichever of the turn analyzer and the finalized
+transcript is *later*, so STT frequently completes first and the "stt final" stage came out
+negative. The stages now add up to the total.
+
+**Measurement:** Turn 4 of the first session has `stt_final_ms` 14282 against `turn_end_ms` 15928,
+an offset of -1646 ms.

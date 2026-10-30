@@ -143,16 +143,25 @@ and every line is buffered in memory and written once at the end of the session.
 
 ### Measured numbers
 
-**No session has been recorded yet, so this section has no numbers in it.** Nothing here is
-estimated or filled in by hand. To produce them:
+**There is still no usable set of numbers.** The first live session is in
+[results/first-call/](results/first-call/), but its `latency.jsonl` was produced by the broken
+observer: 74 rows for about 8 real turns, 37 of them entirely null, and 3 where the first audio
+appeared to arrive before the user went quiet. Those numbers are not reported here because they
+are wrong, not because they are missing. The observer is fixed and covered by synthetic-frame
+tests, so the next session should produce one row per coach reply. To produce them:
 
 ```bash
 make run                                   # run a full interview, doing scenarios A, B and C
 make report SESSION=logs/session-<time>    # p50/p95 and per-stage averages
 ```
 
-Then paste that output here, copy the session into `results/`, and update the turn-taking table
-above with anything the session showed needed changing.
+Then paste that output here and update the turn-taking table above with anything the session
+showed needed changing.
+
+The per-stage breakdown is additive: turn detection, LLM first token and TTS first audio sum to
+the total. STT is reported separately as an offset from the end-of-turn decision, because
+Deepgram often finalizes a transcript *before* end of turn is decided, so as a stage it would
+read as negative time. A negative offset means the reply was not waiting on STT at all.
 
 ### Model latency
 
@@ -167,16 +176,25 @@ that will host the demo.
 
 ## What's weak
 
-- **No recorded session.** Scenarios A, B and C have not been run against a live microphone, so
-  the turn-taking values are untuned and the latency section is empty. This is the main gap.
-- **The feedback model was unavailable when tested.** `gemini-3.8-flash` returned
-  `503 UNAVAILABLE` ("experiencing high demand") on every attempt during development. The code
-  falls back to a fixed line so a session never ends in silence, but that line is generic, which
-  is exactly what the spec says feedback should not be. There is no retry. If this persists,
-  either add one retry or move the feedback call to a model with capacity.
-- **The follow-up cap is enforced by instruction, not by construction.** Code owns the state and
-  injects the constraint, but nothing physically stops the LLM from asking a second follow-up. A
-  second one is logged as a warning and the eval's rule check catches it in the transcript.
+- **One live session so far, and it has not been repeated.** The first call is in
+  [results/first-call/](results/first-call/). Four bugs it exposed are fixed, but the fixes
+  themselves have not met a real conversation yet, and the turn-taking values are still untuned.
+  This is the main gap.
+- **The feedback model is now `gemini-3.1-flash-lite`, not `gemini-3.8-flash`.** 3.8-flash
+  returned `503 UNAVAILABLE` ("experiencing high demand") on every single attempt, so the
+  feedback it was supposed to produce never existed. The default is now the model that actually
+  answers, which is the same one used for the conversation. That gives up the spec's "stronger
+  model" for one that responds; `GEMINI_FEEDBACK_MODEL` still points it anywhere. The fixed
+  fallback line is kept, and client construction is now inside the error guard too, so a bad key
+  falls back to speech rather than killing the session.
+- **A question can still play over the candidate.** The `tts_say` pre-action fires on node entry
+  whether or not the candidate has stopped talking; that is what made question four land on a
+  leftover fragment. The coach now re-asks instead of accepting the fragment, which recovers but
+  costs a turn.
+- **Reaching the feedback now depends on a backstop, not on the model.** When a reply finishes
+  with the follow-up spent and no `next_question` call, code advances the flow itself. The
+  trade-off is that a question can be cut short if the model says something that is neither a
+  nudge nor a verbatim re-ask.
 - **Counting follow-ups in the eval is a heuristic.** It counts coach lines containing a question
   mark that are neither a fixed question nor the nudge. An acknowledgement phrased as a question
   would be miscounted. The LLM judge is there to cover the judgement the rule check cannot make.

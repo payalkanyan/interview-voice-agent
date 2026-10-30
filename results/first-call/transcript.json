@@ -1,0 +1,110 @@
+[
+  {
+    "speaker": "coach",
+    "text": "Hi, thanks for making the time. This will be short, just four questions. Tell me about a project you're proud of.",
+    "at_ms": 1395,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "Okay. So one of the projects that I did is English color",
+    "at_ms": 12946,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That sounds interesting, but could you tell me more about what that project actually did?",
+    "at_ms": 17290,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "So that project is basically an open source in Python which is when you all had last project That's for the agent and the company. Then we get to benchmark their agent on three specific metric.",
+    "at_ms": 25602,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That sounds like a great way to evaluate agent performance.",
+    "at_ms": 48141,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "What was the hardest technical problem in it?",
+    "at_ms": 51136,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "The most hardest problem was about like, talking about the how measurement creating the emotions scenarios personas, based on the business problem of ecommerce. Delivery and EMI refunding and working on.",
+    "at_ms": 57900,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That sounds like a complex challenge to model. Can you tell me more about how you mapped those specific ecommerce scenarios to the agent's personas?",
+    "at_ms": 87000,
+    "interrupted": true
+  },
+  {
+    "speaker": "candidate",
+    "text": "That's that is like, making the very more reliable by using chat k, passcode k, different kind of metrics.",
+    "at_ms": 91954,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That sounds like a solid approach to improving reliability.",
+    "at_ms": 100064,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "How did you know it was working well?",
+    "at_ms": 103273,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "We ensured metrics being implemented",
+    "at_ms": 109914,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That is a clear way to measure progress.",
+    "at_ms": 114118,
+    "interrupted": true
+  },
+  {
+    "speaker": "coach",
+    "text": "What would you do differently now?",
+    "at_ms": 114954,
+    "interrupted": false
+  },
+  {
+    "speaker": "candidate",
+    "text": "and other benchmarks.",
+    "at_ms": 115699,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That makes sense. Can you tell me about a time you had to resolve a conflict within your team?",
+    "at_ms": 119590,
+    "interrupted": true
+  },
+  {
+    "speaker": "candidate",
+    "text": "I will add an HTTP request for the agent. Directly direct to the eval handler. Call back the agent.",
+    "at_ms": 120521,
+    "interrupted": false
+  },
+  {
+    "speaker": "coach",
+    "text": "That sounds like a much more efficient flow. Thanks for sharing those details with me today.",
+    "at_ms": 136217,
+    "interrupted": false
+  }
+]
