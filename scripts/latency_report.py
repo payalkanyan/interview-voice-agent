@@ -8,11 +8,15 @@ import json
 import sys
 from pathlib import Path
 
-# The stages a turn passes through, as consecutive pairs of latency.jsonl fields.
+# The stages a turn passes through. These are consecutive and additive: together they make up
+# the whole wait from the user going quiet to the first coach audio.
+#
+# STT is deliberately not one of them. Deepgram often finalizes a transcript *before* end of turn
+# is decided, because TurnAnalyzerUserTurnStopStrategy waits for whichever of the two is later, so
+# treating STT as a stage between them yields a negative duration. It is reported separately.
 STAGES: tuple[tuple[str, str, str], ...] = (
     ("turn detection", "user_stopped_ms", "turn_end_ms"),
-    ("stt final", "turn_end_ms", "stt_final_ms"),
-    ("llm first token", "stt_final_ms", "llm_first_token_ms"),
+    ("llm first token", "turn_end_ms", "llm_first_token_ms"),
     ("tts first audio", "llm_first_token_ms", "tts_first_audio_ms"),
 )
 
@@ -55,6 +59,19 @@ def total_latencies(turns: list[dict]) -> list[int]:
     ]
 
 
+def transcript_offsets(turns: list[dict]) -> list[int]:
+    """Milliseconds from end of turn to the final transcript, per turn.
+
+    Negative means the transcript was ready before end of turn was decided, so STT was not what
+    the reply was waiting on.
+    """
+    return [
+        turn["stt_final_ms"] - turn["turn_end_ms"]
+        for turn in turns
+        if turn.get("stt_final_ms") is not None and turn.get("turn_end_ms") is not None
+    ]
+
+
 def stage_averages(turns: list[dict]) -> list[tuple[str, float, int]]:
     """Average milliseconds spent in each stage, with the number of turns each average used."""
     out = []
@@ -91,9 +108,19 @@ def report(session_dir: Path) -> str:
     else:
         lines.append("  no complete turns")
 
-    lines += ["", "Average time in each stage"]
+    lines += ["", "Average time in each stage (these add up to the total above)"]
     for label, average, count in stage_averages(turns):
         lines.append(f"  {label:<16} {average:7.0f} ms  (n={count})")
+
+    offsets = transcript_offsets(turns)
+    if offsets:
+        average = sum(offsets) / len(offsets)
+        lines += [
+            "",
+            "Final transcript, relative to the end-of-turn decision",
+            f"  {'mean':<16} {average:7.0f} ms  (n={len(offsets)})",
+            "  Negative means STT finished first, so the reply was not waiting on it.",
+        ]
 
     lines += [
         "",
